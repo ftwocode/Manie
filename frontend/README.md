@@ -3,7 +3,7 @@
     npm add axios dayjs jwt-decode react-router-dom@5.2.0
     npm start
 
->   Para o Login criar os arquivos abaixo:
+>   Para o Login criar os arquivos abaixo dentro da pasta src:
 
     mkdir services;
     mkdir services/net;
@@ -25,7 +25,7 @@
     touch services/net/AxiosUsersService.js;
 
 
->   E Ficarao estruturados da seguinte forma:
+>   Dentro da pasta src ficarao estruturados da seguinte forma:
 
     .
     ├── App.js
@@ -50,10 +50,405 @@
             └── base
                 └── AxiosService.js
 
+>   `services/net/AxiosUsersService.js`
+
+    import { createContext, useState, useEffect } from "react";
+    import jwt_decode from "jwt-decode";
+    import { useHistory } from "react-router-dom";
+
+    const AxiosUsersService = createContext();
+
+    export default AxiosUsersService;
+
+    export const AuthProvider = ({ children }) => {
+        const [authTokens, setAuthTokens] = useState(() =>
+            localStorage.getItem("authTokens")
+            ? JSON.parse(localStorage.getItem("authTokens"))
+            : null
+        );
+        const [user, setUser] = useState(() =>
+            localStorage.getItem("authTokens")
+            ? jwt_decode(localStorage.getItem("authTokens"))
+            : null
+        );
+        const [loading, setLoading] = useState(true);
+
+        const history = useHistory();
+
+        const loginUser = async (username, password) => {
+            const response = await fetch("http://127.0.0.1:8000/api/token/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                password
+            })
+            });
+            const data = await response.json();
+
+            if (response.status === 200) {
+            setAuthTokens(data);
+            setUser(jwt_decode(data.access));
+            localStorage.setItem("authTokens", JSON.stringify(data));
+            history.push("/");
+            } else {
+            alert("Something went wrong!");
+            }
+        };
+
+        const registerUser = async (username, password, password2) => {
+            const response = await fetch("http://127.0.0.1:8000/api/register/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                password,
+                password2
+            })
+            });
+            if (response.status === 201) {
+            history.push("/login");
+            } else {
+            alert("Something went wrong!");
+            }
+        };
+
+        const logoutUser = () => {
+            setAuthTokens(null);
+            setUser(null);
+            localStorage.removeItem("authTokens");
+            history.push("/");
+        };
+
+        const contextData = {
+            user,
+            setUser,
+            authTokens,
+            setAuthTokens,
+            registerUser,
+            loginUser,
+            logoutUser
+        };
+
+        useEffect(() => {
+            if (authTokens) {
+            setUser(jwt_decode(authTokens.access));
+            }
+            setLoading(false);
+        }, [authTokens, loading]);
+
+        return (
+            <AxiosUsersService.Provider value={contextData}>
+            {loading ? null : children}
+            </AxiosUsersService.Provider>
+        );
+    };
+
+
+>   `services/net/base/AxiosService.js`
+
+    import axios from "axios";
+    import jwt_decode from "jwt-decode";
+    import dayjs from "dayjs";
+    import { useContext } from "react";
+    import AuthContext from "../context/AuthContext";
+
+    const baseURL = "http://127.0.0.1:8000/api";
+
+    const useAxios = () => {
+    const { authTokens, setUser, setAuthTokens } = useContext(AuthContext);
+
+    const axiosInstance = axios.create({
+        baseURL,
+        headers: { Authorization: `Bearer ${authTokens?.access}` }
+    });
+
+    axiosInstance.interceptors.request.use(async req => {
+        const user = jwt_decode(authTokens.access);
+        const isExpired = dayjs.unix(user.exp).diff(dayjs()) < 1;
+
+        if (!isExpired) return req;
+
+        const response = await axios.post(`${baseURL}/token/refresh/`, {
+        refresh: authTokens.refresh
+        });
+
+        localStorage.setItem("authTokens", JSON.stringify(response.data));
+
+        setAuthTokens(response.data);
+        setUser(jwt_decode(response.data.access));
+
+        req.headers.Authorization = `Bearer ${response.data.access}`;
+        return req;
+    });
+
+    return axiosInstance;
+    };
+
+    export default useAxios;
+
+
+>   `services/guards/PrivateRoute.js`
+
+    import { Route, Redirect } from "react-router-dom";
+    import { useContext } from "react";
+    import AuthContext from "../context/AuthContext";
+
+    const PrivateRoute = ({ children, ...rest }) => {
+        let { user } = useContext(AuthContext);
+        return <Route {...rest}>{!user ? <Redirect to="/login" /> : children}</Route>;
+    };
+
+    export default PrivateRoute;
+
+
+>   `App.js`
+
+    import React from "react";
+    import "./index.css";
+    import Footer from "./components/Footer";
+    import Navbar from "./components/Navbar";
+    import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+    import PrivateRoute from "./utils/PrivateRoute";
+    import { AuthProvider } from "./context/AuthContext";
+    import Home from "./views/homePage";
+    import Login from "./views/loginPage";
+    import Register from "./views/registerPage";
+    import ProtectedPage from "./views/ProtectedPage";
+
+    function App() {
+        return (
+        <Router>
+            <div className="flex flex-col min-h-screen overflow-hidden">
+            <AuthProvider>
+                <Navbar />
+                <Switch>
+                <PrivateRoute component={ProtectedPage} path="/protected" exact />
+                <Route component={Login} path="/login" />
+                <Route component={Register} path="/register" />
+                <Route component={Home} path="/" />
+                </Switch>
+            </AuthProvider>
+            <Footer />
+            </div>
+        </Router>
+        );
+    }
+
+    export default App;
+
+>   `components/partials/Footer.js`
+
+    const Footer = () => {
+        return (
+            <div>
+            <h4>Created By You</h4>
+            </div>
+        );
+    };
+
+    export default Footer;
+
+>   `components/partials/NavigationMenu.js`
+
+    import { useContext } from "react";
+    import { Link } from "react-router-dom";
+    import AuthContext from "../context/AuthContext";
+
+    const Navbar = () => {
+        const { user, logoutUser } = useContext(AuthContext);
+        return (
+        <nav>
+            <div>
+            <h1>App Name</h1>
+            <div>
+                {user ? (
+                <>
+                    <Link to="/">Home</Link>
+                    <Link to="/protected">Protected Page</Link>
+                    <button onClick={logoutUser}>Logout</button>
+                </>
+                ) : (
+                <>
+                    <Link to="/login">Login</Link>
+                    <Link to="/register">Register</Link>
+                </>
+                )}
+            </div>
+            </div>
+        </nav>
+        );
+    };
+
+    export default Navbar;
+
+>   `components/partials/UserInfo.js`
+
+    function UserInfo({ user }) {
+        return (
+            <div>
+            <h1>Hello, {user.username}</h1>
+            </div>
+        );
+    }
+
+    export default UserInfo;
+
+>   `components/pages/Protected.js`
+
+    import { useEffect, useState } from "react";
+    import useAxios from "../utils/useAxios";
+
+    function ProtectedPage() {
+    const [res, setRes] = useState("");
+    const api = useAxios();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await api.get("/test/");
+                setRes(response.data.response);
+            } catch {
+                setRes("Something went wrong");
+            }
+        };
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+        return (
+            <div>
+                <h1>Projected Page</h1>
+                <p>{res}</p>
+            </div>
+        );
+    }
+
+    export default ProtectedPage;
+
+>   `components/pages/Home.js`
+
+    import { useContext } from "react";
+    import UserInfo from "../components/UserInfo";
+    import AuthContext from "../context/AuthContext";
+
+    const Home = () => {
+    const { user } = useContext(AuthContext);
+    return (
+        <section>
+        {user && <UserInfo user={user} />}
+        <h1>You are on home page!</h1>
+        </section>
+    );
+    };
+
+    export default Home;
+
+
+>   `components/users/Login.js;`
+
+    import { useContext } from "react";
+    import AuthContext from "../context/AuthContext";
+
+    const LoginPage = () => {
+        const { loginUser } = useContext(AuthContext);
+        const handleSubmit = e => {
+            e.preventDefault();
+            const username = e.target.username.value;
+            const password = e.target.password.value;
+            username.length > 0 && loginUser(username, password);
+        };
+
+        return (
+            <section>
+                <form onSubmit={handleSubmit}>
+                    <h1>Login </h1>
+                    <hr />
+                    <label htmlFor="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter Username" />
+                    <label htmlFor="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter Password" />
+                    <button type="submit">Login</button>
+                </form>
+            </section>
+        );
+    };
+
+    export default LoginPage;
+
+>   `components/users/Register.js`
+
+    import { useState, useContext } from "react";
+    import AuthContext from "../context/AuthContext";
+
+    function Register() {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [password2, setPassword2] = useState("");
+    const { registerUser } = useContext(AuthContext);
+
+    const handleSubmit = async e => {
+        e.preventDefault();
+        registerUser(username, password, password2);
+    };
+
+    return (
+        <section>
+            <form onSubmit={handleSubmit}>
+                <h1>Register</h1>
+                <hr />
+                <div>
+                <label htmlFor="username">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    onChange={e => setUsername(e.target.value)}
+                    placeholder="Username"
+                    required
+                />
+                </div>
+                <div>
+                <label htmlFor="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Password"
+                    required
+                />
+                </div>
+                <div>
+                <label htmlFor="confirm-password">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirm-password"
+                    onChange={e => setPassword2(e.target.value)}
+                    placeholder="Confirm Password"
+                    required
+                />
+                <p>{password2 !== password ? "Passwords do not match" : ""}</p>
+                </div>
+                <button>Register</button>
+            </form>
+        </section>
+    );
+    }
+
+    export default Register;
+
+>   ``
 
 
 
+>   ``
 
+
+
+>   ``
 
 # Getting Started with Create React App
 
