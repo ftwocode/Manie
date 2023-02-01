@@ -3,7 +3,7 @@
     npm add axios dayjs jwt-decode react-router-dom@5.2.0
     npm start
 
->   #   Para o Login criar os arquivos abaixo dentro da pasta src:
+>   ##   Para o Login criar os arquivos abaixo dentro da pasta src:
 
     mkdir services;
     mkdir services/net;
@@ -25,7 +25,7 @@
     touch services/net/AxiosUsersService.js;
 
 
->   #   Dentro da pasta src ficarao estruturados da seguinte forma:
+>   ##   Dentro da pasta src ficarao estruturados da seguinte forma:
 
     .
     ├── App.js
@@ -50,7 +50,7 @@
             └── base
                 └── AxiosService.js
 
->   #   services/net/AxiosUsersService.js
+>   ##   services/net/AxiosUsersService.js
 
     import { createContext, useState, useEffect } from "react";
     import jwt_decode from "jwt-decode";
@@ -149,7 +149,7 @@
     };
 
 
->   #   services/net/base/AxiosService.js
+>   ##   services/net/base/AxiosService.js
 
     import axios from "axios";
     import jwt_decode from "jwt-decode";
@@ -192,7 +192,7 @@
     export default AxiosService;
 
 
->   #   services/guards/PrivateRoute.js
+>   ##   services/guards/PrivateRoute.js
 
     import { Route, Redirect } from "react-router-dom";
     import { useContext } from "react";
@@ -206,7 +206,7 @@
     export default PrivateRoute;
 
 
->   #   App.js
+>   ##   App.js
 
     import React from "react";
     import "./index.css";
@@ -241,7 +241,7 @@
 
     export default App;
 
->   #   components/partials/Footer.js
+>   ##   components/partials/Footer.js
 
     const Footer = () => {
         return (
@@ -253,7 +253,7 @@
 
     export default Footer;
 
->   #   components/partials/NavigationMenu.js
+>   ##   components/partials/NavigationMenu.js
 
     import { useContext } from "react";
     import { Link } from "react-router-dom";
@@ -286,7 +286,7 @@
 
     export default NavigationMenu;
 
->   #   components/partials/UserInfo.js
+>   ##   components/partials/UserInfo.js
 
     function UserInfo({ user }) {
         return (
@@ -298,7 +298,7 @@
 
     export default UserInfo;
 
->   #   components/pages/Protected.js
+>   ##   components/pages/Protected.js
 
     import { useEffect, useState } from "react";
     import AxiosService from "../utils/AxiosService";
@@ -330,7 +330,7 @@
 
     export default Protected;
 
->   #   components/pages/Home.js
+>   ##   components/pages/Home.js
 
     import { useContext } from "react";
     import UserInfo from "../components/UserInfo";
@@ -349,7 +349,7 @@
     export default Home;
 
 
->   #   components/users/Login.js;`
+>   ##   components/users/Login.js;`
 
     import { useContext } from "react";
     import AuthContext from "../context/AuthContext";
@@ -380,7 +380,7 @@
 
     export default Login;
 
->   #  `components/users/Register.js
+>   ##  `components/users/Register.js
 
     import { useState, useContext } from "react";
     import AuthContext from "../context/AuthContext";
