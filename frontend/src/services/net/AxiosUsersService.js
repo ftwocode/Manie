@@ -2,9 +2,9 @@ import { createContext, useState, useEffect } from "react";
 import jwt_decode from "jwt-decode";
 import { useHistory } from "react-router-dom";
 
-const AuthContext = createContext();
+const AxiosUsersService = createContext();
 
-export default AuthContext;
+export default AxiosUsersService;
 
 export const AuthProvider = ({ children }) => {
     const [authTokens, setAuthTokens] = useState(() =>
@@ -88,8 +88,8 @@ export const AuthProvider = ({ children }) => {
     }, [authTokens, loading]);
 
     return (
-        <AuthContext.Provider value={contextData}>
+        <AxiosUsersService.Provider value={contextData}>
         {loading ? null : children}
-        </AuthContext.Provider>
+        </AxiosUsersService.Provider>
     );
 };

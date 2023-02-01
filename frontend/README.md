@@ -20,9 +20,9 @@
     touch components/partials/NavigationMenu.js;
     touch components/partials/Footer.js;
     touch components/partials/UserInfo.js;
-    touch services/net/base/AxiosService.js;
+    touch services/net/base/AxiosUsersService.js;
     touch services/guards/PrivateRoute.js;
-    touch services/net/AxiosUsersService.js;
+    touch services/net/AxiosService.js;
 
 
 >   ##   Dentro da pasta src ficarao estruturados da seguinte forma:
@@ -46,19 +46,19 @@
         ├── guards
         │   └── PrivateRoute.js
         └── net
-            ├── AxiosUsersService.js
+            ├── AxiosService.js
             └── base
-                └── AxiosService.js
+                └── AxiosUsersService.js
 
->   ##   services/net/AxiosUsersService.js
+>   ##   services/net/AxiosService.js
 
     import { createContext, useState, useEffect } from "react";
     import jwt_decode from "jwt-decode";
     import { useHistory } from "react-router-dom";
 
-    const AxiosUsersService = createContext();
+    const AxiosService = createContext();
 
-    export default AxiosUsersService;
+    export default AxiosService;
 
     export const AuthProvider = ({ children }) => {
         const [authTokens, setAuthTokens] = useState(() =>
@@ -142,25 +142,25 @@
         }, [authTokens, loading]);
 
         return (
-            <AxiosUsersService.Provider value={contextData}>
+            <AxiosService.Provider value={contextData}>
             {loading ? null : children}
-            </AxiosUsersService.Provider>
+            </AxiosService.Provider>
         );
     };
 
 
->   ##   services/net/base/AxiosService.js
+>   ##   services/net/base/AxiosUsersService.js
 
     import axios from "axios";
     import jwt_decode from "jwt-decode";
     import dayjs from "dayjs";
     import { useContext } from "react";
-    import AuthContext from "../context/AuthContext";
+    import AxiosService from "./base/AxiosService";
 
     const baseURL = "http://127.0.0.1:8000/api";
 
-    const AxiosService = () => {
-    const { authTokens, setUser, setAuthTokens } = useContext(AuthContext);
+    const AxiosUsersService = () => {
+    const { authTokens, setUser, setAuthTokens } = useContext(AxiosService);
 
     const axiosInstance = axios.create({
         baseURL,
@@ -189,17 +189,17 @@
     return axiosInstance;
     };
 
-    export default AxiosService;
+    export default AxiosUsersService;
 
 
 >   ##   services/guards/PrivateRoute.js
 
     import { Route, Redirect } from "react-router-dom";
     import { useContext } from "react";
-    import AuthContext from "../context/AuthContext";
+    import AxiosService from "../context/AxiosService";
 
     const PrivateRoute = ({ children, ...rest }) => {
-        let { user } = useContext(AuthContext);
+        let { user } = useContext(AxiosService);
         return <Route {...rest}>{!user ? <Redirect to="/login" /> : children}</Route>;
     };
 
@@ -210,15 +210,15 @@
 
     import React from "react";
     import "./index.css";
-    import Footer from "./components/Footer";
-    import NavigationMenu from "./components/NavigationMenu";
+    import Footer from "./components/partials/Footer";
+    import NavigationMenu from "./components/partials/NavigationMenu";
     import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-    import PrivateRoute from "./utils/PrivateRoute";
-    import { AuthProvider } from "./context/AuthContext";
-    import Home from "./views/homePage";
-    import Login from "./views/Login";
-    import Register from "./views/registerPage";
-    import Protected from "./views/Protected";
+    import PrivateRoute from "./services/guards/PrivateRoute";
+    import { AuthProvider } from "./services/net/AxiosService";
+    import Home from "./components/pages/Home";
+    import Login from "./components/users/Login";
+    import Register from "./components/users/Register";
+    import Protected from "./components/pages/Protected";
 
     function App() {
         return (
@@ -257,10 +257,10 @@
 
     import { useContext } from "react";
     import { Link } from "react-router-dom";
-    import AuthContext from "../context/AuthContext";
+    import AxiosService from "../context/AxiosService";
 
     const NavigationMenu = () => {
-        const { user, logoutUser } = useContext(AuthContext);
+        const { user, logoutUser } = useContext(AxiosService);
         return (
         <nav>
             <div>
@@ -301,11 +301,11 @@
 >   ##   components/pages/Protected.js
 
     import { useEffect, useState } from "react";
-    import AxiosService from "../utils/AxiosService";
+    import AxiosUsersService from "../utils/AxiosUsersService";
 
     function Protected() {
     const [res, setRes] = useState("");
-    const api = AxiosService();
+    const api = AxiosUsersService();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -334,10 +334,10 @@
 
     import { useContext } from "react";
     import UserInfo from "../components/UserInfo";
-    import AuthContext from "../context/AuthContext";
+    import AxiosService from "../context/AxiosService";
 
     const Home = () => {
-        const { user } = useContext(AuthContext);
+        const { user } = useContext(AxiosService);
         return (
             <section>
             {user && <UserInfo user={user} />}
@@ -352,10 +352,10 @@
 >   ##   components/users/Login.js;`
 
     import { useContext } from "react";
-    import AuthContext from "../context/AuthContext";
+    import AxiosService from "../context/AxiosService";
 
     const Login = () => {
-        const { loginUser } = useContext(AuthContext);
+        const { loginUser } = useContext(AxiosService);
         const handleSubmit = e => {
             e.preventDefault();
             const username = e.target.username.value;
@@ -383,13 +383,13 @@
 >   ##  `components/users/Register.js
 
     import { useState, useContext } from "react";
-    import AuthContext from "../context/AuthContext";
+    import AxiosService from "../context/AxiosService";
 
     function Register() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [password2, setPassword2] = useState("");
-    const { registerUser } = useContext(AuthContext);
+    const { registerUser } = useContext(AxiosService);
 
     const handleSubmit = async e => {
         e.preventDefault();
