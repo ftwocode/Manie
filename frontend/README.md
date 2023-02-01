@@ -50,7 +50,7 @@
             └── base
                 └── AxiosService.js
 
->   #   `services/net/AxiosUsersService.js`
+>   #   services/net/AxiosUsersService.js
 
     import { createContext, useState, useEffect } from "react";
     import jwt_decode from "jwt-decode";
@@ -149,7 +149,7 @@
     };
 
 
->   #   `services/net/base/AxiosService.js`
+>   #   services/net/base/AxiosService.js
 
     import axios from "axios";
     import jwt_decode from "jwt-decode";
@@ -159,7 +159,7 @@
 
     const baseURL = "http://127.0.0.1:8000/api";
 
-    const useAxios = () => {
+    const AxiosService = () => {
     const { authTokens, setUser, setAuthTokens } = useContext(AuthContext);
 
     const axiosInstance = axios.create({
@@ -189,10 +189,10 @@
     return axiosInstance;
     };
 
-    export default useAxios;
+    export default AxiosService;
 
 
->   #   `services/guards/PrivateRoute.js`
+>   #   services/guards/PrivateRoute.js
 
     import { Route, Redirect } from "react-router-dom";
     import { useContext } from "react";
@@ -206,28 +206,28 @@
     export default PrivateRoute;
 
 
->   #   `App.js`
+>   #   App.js
 
     import React from "react";
     import "./index.css";
     import Footer from "./components/Footer";
-    import Navbar from "./components/Navbar";
+    import NavigationMenu from "./components/NavigationMenu";
     import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
     import PrivateRoute from "./utils/PrivateRoute";
     import { AuthProvider } from "./context/AuthContext";
     import Home from "./views/homePage";
-    import Login from "./views/loginPage";
+    import Login from "./views/Login";
     import Register from "./views/registerPage";
-    import ProtectedPage from "./views/ProtectedPage";
+    import Protected from "./views/Protected";
 
     function App() {
         return (
         <Router>
             <div className="flex flex-col min-h-screen overflow-hidden">
             <AuthProvider>
-                <Navbar />
+                <NavigationMenu />
                 <Switch>
-                <PrivateRoute component={ProtectedPage} path="/protected" exact />
+                <PrivateRoute component={Protected} path="/protected" exact />
                 <Route component={Login} path="/login" />
                 <Route component={Register} path="/register" />
                 <Route component={Home} path="/" />
@@ -241,7 +241,7 @@
 
     export default App;
 
->   #   `components/partials/Footer.js`
+>   #   components/partials/Footer.js
 
     const Footer = () => {
         return (
@@ -253,13 +253,13 @@
 
     export default Footer;
 
->   #   `components/partials/NavigationMenu.js`
+>   #   components/partials/NavigationMenu.js
 
     import { useContext } from "react";
     import { Link } from "react-router-dom";
     import AuthContext from "../context/AuthContext";
 
-    const Navbar = () => {
+    const NavigationMenu = () => {
         const { user, logoutUser } = useContext(AuthContext);
         return (
         <nav>
@@ -284,9 +284,9 @@
         );
     };
 
-    export default Navbar;
+    export default NavigationMenu;
 
->   #   `components/partials/UserInfo.js`
+>   #   components/partials/UserInfo.js
 
     function UserInfo({ user }) {
         return (
@@ -298,14 +298,14 @@
 
     export default UserInfo;
 
->   #   `components/pages/Protected.js`
+>   #   components/pages/Protected.js
 
     import { useEffect, useState } from "react";
-    import useAxios from "../utils/useAxios";
+    import AxiosService from "../utils/AxiosService";
 
-    function ProtectedPage() {
+    function Protected() {
     const [res, setRes] = useState("");
-    const api = useAxios();
+    const api = AxiosService();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -328,33 +328,33 @@
         );
     }
 
-    export default ProtectedPage;
+    export default Protected;
 
->   #   `components/pages/Home.js`
+>   #   components/pages/Home.js
 
     import { useContext } from "react";
     import UserInfo from "../components/UserInfo";
     import AuthContext from "../context/AuthContext";
 
     const Home = () => {
-    const { user } = useContext(AuthContext);
-    return (
-        <section>
-        {user && <UserInfo user={user} />}
-        <h1>You are on home page!</h1>
-        </section>
-    );
+        const { user } = useContext(AuthContext);
+        return (
+            <section>
+            {user && <UserInfo user={user} />}
+            <h1>You are on home page!</h1>
+            </section>
+        );
     };
 
     export default Home;
 
 
->   #   `components/users/Login.js;`
+>   #   components/users/Login.js;`
 
     import { useContext } from "react";
     import AuthContext from "../context/AuthContext";
 
-    const LoginPage = () => {
+    const Login = () => {
         const { loginUser } = useContext(AuthContext);
         const handleSubmit = e => {
             e.preventDefault();
@@ -378,9 +378,9 @@
         );
     };
 
-    export default LoginPage;
+    export default Login;
 
->   #  `components/users/Register.js`
+>   #  `components/users/Register.js
 
     import { useState, useContext } from "react";
     import AuthContext from "../context/AuthContext";
